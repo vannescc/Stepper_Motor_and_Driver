@@ -13,8 +13,6 @@
 unsigned long stepDelay = 60L * 1000L / STEPS / RPM;
 unsigned long stepNumber;
 
-/* C Prototypes of functions */
-void pwm_hw_setup();
 
 void my_delay_ms( unsigned int delay);
 void step(int stepsToMove);
@@ -25,25 +23,25 @@ int abs(int num);
 int main (void) 
 {
 
-	/* need outputs on PD3 (red = Pin2), PD4 (yellow = Pin4), PD5 (green = Pin5) */
-	DDRB |= _BV(DDB0);
-	DDRB |= _BV(DDB1);
-	DDRB |= _BV(DDB2);
-    DDRB |= _BV(DDB3);
+	/* need outputs on PD0, 1, 2, and 3. These are the 4 wires that your stepper motor is connected to.*/
+	DDRB |= _BV(DDB0); //IN1
+	DDRB |= _BV(DDB1); //IN3
+	DDRB |= _BV(DDB2); //IN2
+    DDRB |= _BV(DDB3); //IN4
 
-    
-
-	// DDRD |= _BV(DDD3);
-	// DDRB |= _BV(DDB2);
-	// DDRB |= _BV(DDB3);
 
 	while(1) 
 	{
-		step(2048);
-        step(-2048);
+		step(2048); //clockwise
+        step(-2048); //counterclockwise
 	}
 }
 
+/*
+moves the stepper motor the defined number of steps
+moves forwards is stepsToMove is positive, and backwards
+if stepsToMove is negative
+*/
 void step(int stepsToMove) {
     int direction;
     int stepsLeft = abs(stepsToMove);
@@ -74,6 +72,9 @@ void step(int stepsToMove) {
     }
 }
 
+/*
+moves the stepper motor one step forwards or backwards
+*/
 void stepMotor(unsigned int stepNumber) {
     switch(stepNumber) {
         case 0:
@@ -110,82 +111,6 @@ int abs(int num) {
     }
     return num;
 }
-
-/*
- * Sets up the three PWM timers (0, 1, 2) and the pins related to them with 0 duty cycle.
- *
- * Note: might want to disable pins you aren't using!!!
- *
- * I also set up the three pins to output here, but you could do in main
- */
-void pwm_hw_setup()
-{
-	// TIMER 0 - 8 bit
-	// EXAMPLE set PWM 50%
-	// OCR0A = 128;
-	// OCR0B = 128;
-	
-	OCR0A = 0;
-	OCR0B = 0;
-
-    	// set none-inverting mode
-	TCCR0A |= (1 << COM0A1);
-    	// set fast PWM Mode
-	TCCR0A |= (1 << WGM01) | (1 << WGM00);
-    	// set prescaler to 8 and starts PWM
-	TCCR0B |= (1 << CS01);
-	
-	// TIMER 1 - 16 bit
-	// OC1A and OC1B synced
-	// EXAMPLE set PWM for 25% duty cycle @ 16bit
-	// OCR1A = 0x3FFF;
-	// set PWM for 75% duty cycle @ 16bit
-	// OCR1B = 0xBFFF;
-	
-    	// set TOP to 16bit
-	ICR1 = 0xFFFF;
-
-	OCR1A = 0x0000;
-	OCR1B = 0x0000;
-
-	// set none-inverting mode
-	TCCR1A |= (1 << COM1A1) | (1 << COM1B1);
-	// set Fast PWM mode using ICR1 as TOP - MODE 14
-	TCCR1A |= (1 << WGM11);
-    TCCR1B |= (1 << WGM13) | (1 << WGM12);
-    
-	// START the timer with no prescaler
-	TCCR1B |= (1 << CS10);
-
-	// TIMER 2 - 8 bit
-	// OC2A and OC2B synced
-	// EXAMPLE - 50% DUTY
-	// OCR2A = 128;
-
-	// set PWM for 0% duty cycle
-	OCR2A = 0;
-	OCR2B = 0;
-
-	// set none-inverting mode A
-	TCCR2A |= (1 << COM2A1);
-	// set none-inverting mode B
-	TCCR2A |= (1 << COM2B1);
-
-	// set fast PWM Mode
-	TCCR2A |= (1 << WGM21) | (1 << WGM20);
-	// START WITH NO PRESCALER
-	TCCR2B |= (1 << CS20);
-
-	// SELECT PINS we're going out on for our schematic
-	/* set OC2B = Arduino_Pin3 pin as output - TIMER 2 */
-	DDRD |= (1 << DDD3);
-	/* set OC1B = Arduino_Pin10 pin as output - TIMER 1 */
-	DDRB |= (1 << DDB2);
-	/* set OC2A = Arduino_Pin11 pin as output - TIMER 2 */
-	DDRB |= (1 << DDB3);
-}
-
-
 
 void my_delay_ms(unsigned int delay) 
 {
